@@ -1,0 +1,298 @@
+/* ── Layout ── */
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.app-header {
+  text-align: center;
+  padding: 40px 0 8px;
+}
+
+.subtitle {
+  color: var(--text);
+  font-size: 1rem;
+  margin-top: 4px;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.note {
+  font-size: 0.875rem;
+  color: var(--text);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+/* ── Inputs ── */
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.input-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.field-hint {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text);
+  font-style: italic;
+}
+
+.input-wrap {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.input-wrap .prefix {
+  padding: 8px 0 8px 12px;
+  color: var(--text);
+  font-size: 0.95rem;
+  user-select: none;
+}
+
+.input-wrap input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 8px 12px 8px 4px;
+  font-size: 0.95rem;
+  background: transparent;
+  color: var(--text-h);
+  font-family: var(--mono);
+}
+
+/* Hide number spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ── Instructions ── */
+.instructions {
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.instructions summary {
+  cursor: pointer;
+  padding: 10px 14px;
+  font-weight: 600;
+  color: var(--text-h);
+  list-style: none;
+}
+
+.instructions summary::before {
+  content: "▶ ";
+  font-size: 0.7em;
+  margin-right: 4px;
+}
+
+.instructions[open] summary::before {
+  content: "▼ ";
+}
+
+.instructions ol {
+  margin: 0 0 12px;
+  padding: 0 14px 0 32px;
+  line-height: 1.7;
+}
+
+.instructions ul {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+  line-height: 1.7;
+}
+
+/* ── File upload ── */
+.file-upload {
+  display: inline-block;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.file-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-light);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.file-upload-btn:hover {
+  opacity: 0.8;
+}
+
+.upload-error {
+  color: var(--red);
+  font-size: 0.875rem;
+  margin-bottom: 12px;
+}
+
+/* ── Tables ── */
+.table-wrap {
+  overflow-x: auto;
+  margin: 0 -24px;
+  padding: 0 24px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-h);
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+th.num,
+td.num {
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+.grant-name {
+  font-size: 0.8rem;
+  color: var(--text);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+tfoot td {
+  border-bottom: none;
+  border-top: 2px solid var(--border);
+  padding-top: 10px;
+}
+
+tr.inactive td {
+  opacity: 0.4;
+}
+
+/* ── Summary rows ── */
+.summary-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-table .row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+.summary-table .row:last-child {
+  border-bottom: none;
+}
+
+.summary-table .row span:last-child {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+}
+
+.summary-table .row.total {
+  font-weight: 700;
+  color: var(--text-h);
+  border-bottom: none;
+  border-top: 2px solid var(--border);
+  padding-top: 12px;
+  margin-top: 4px;
+  font-size: 1.05rem;
+}
+
+.summary-table .row.total span:last-child {
+  font-size: 1rem;
+}
+
+.tax-totals {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.row.owing span:last-child {
+  color: var(--red);
+}
+
+.row.refund span:last-child {
+  color: var(--green);
+}
+
+/* ── Footer ── */
+.app-footer {
+  text-align: center;
+  padding: 16px 0 24px;
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.6;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ── Loading / Error ── */
+.loading,
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  font-size: 1.1rem;
+}
+
+.error {
+  color: var(--red);
+}
