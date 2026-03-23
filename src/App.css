@@ -97,6 +97,39 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+/* ── Tab switcher ── */
+.tab-switcher {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.tab {
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab + .tab {
+  border-left: 1px solid var(--border);
+}
+
+.tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.tab:not(.active):hover {
+  background: var(--accent-light);
+}
+
 /* ── Instructions ── */
 .instructions {
   margin-bottom: 12px;

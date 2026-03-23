@@ -44,7 +44,10 @@ interface RSUReleaseWithAUD extends RSURelease {
   valueAUD: number | null;
 }
 
+type IncomeMode = "ytd" | "total";
+
 function App() {
+  const [incomeMode, setIncomeMode] = useState<IncomeMode>("ytd");
   const [incomeSoFar, setIncomeSoFar] = useState("");
   const [taxWithheldSoFar, setTaxWithheldSoFar] = useState("");
   const [bonus, setBonus] = useState("");
@@ -89,18 +92,27 @@ function App() {
   const withheldNum = parseFloat(taxWithheldSoFar) || 0;
   const bonusNum = parseFloat(bonus) || 0;
 
+  const isYTD = incomeMode === "ytd";
+
   const elapsed = daysElapsedInFY();
   const remaining = TOTAL_FY_DAYS - elapsed;
   const projectionFactor = TOTAL_FY_DAYS / elapsed;
 
-  const projectedEmploymentIncome = incomeNum * projectionFactor;
-  const projectedRemainingIncome = projectedEmploymentIncome - incomeNum;
-  const projectedTaxWithheld = withheldNum * projectionFactor;
+  const annualEmploymentIncome = isYTD
+    ? incomeNum * projectionFactor
+    : incomeNum;
+  const annualTaxWithheld = isYTD
+    ? withheldNum * projectionFactor
+    : withheldNum;
+  const projectedRemainingIncome = isYTD
+    ? annualEmploymentIncome - incomeNum
+    : 0;
 
   // Estimate what PAYG should roughly be on income-so-far for sanity-checking.
-  // Annualise, compute tax on salary alone, then pro-rate back to elapsed period.
-  const annualTaxOnSalary = calculateTaxSummary(projectedEmploymentIncome);
-  const expectedWithheld = annualTaxOnSalary.totalTax / projectionFactor;
+  const annualTaxOnSalary = calculateTaxSummary(annualEmploymentIncome);
+  const expectedWithheld = isYTD
+    ? annualTaxOnSalary.totalTax / projectionFactor
+    : annualTaxOnSalary.totalTax;
 
   const rsuWithAUD: RSUReleaseWithAUD[] = useMemo(
     () =>
@@ -118,17 +130,17 @@ function App() {
   const totalRsuUSD = rsuWithAUD.reduce((sum, r) => sum + r.valueUSD, 0);
   const totalRsuAUD = rsuWithAUD.reduce((sum, r) => sum + (r.valueAUD ?? 0), 0);
 
-  const totalTaxableIncome = projectedEmploymentIncome + bonusNum + totalRsuAUD;
+  const totalTaxableIncome = annualEmploymentIncome + bonusNum + totalRsuAUD;
   const taxSummary = calculateTaxSummary(totalTaxableIncome);
 
   // Bonus is PAYG — its marginal tax is assumed withheld by the employer,
   // so we exclude it from the "owing" amount.
   const taxExclBonus = calculateTaxSummary(
-    projectedEmploymentIncome + totalRsuAUD,
+    annualEmploymentIncome + totalRsuAUD,
   );
   const estimatedBonusPAYG = taxSummary.totalTax - taxExclBonus.totalTax;
   const netTaxOwing =
-    taxSummary.totalTax - projectedTaxWithheld - estimatedBonusPAYG;
+    taxSummary.totalTax - annualTaxWithheld - estimatedBonusPAYG;
 
   if (ratesLoading)
     return <div className="loading">Loading exchange rates…</div>;
@@ -142,9 +154,25 @@ function App() {
         <p className="subtitle">FY2026 · 1 July 2025 – 30 June 2026</p>
       </header>
 
-      {/* ── Year-to-date income inputs ── */}
+      {/* ── Income inputs ── */}
       <section className="card">
-        <h2>Year-to-Date Income</h2>
+        <h2>Employment Income</h2>
+
+        <div className="tab-switcher">
+          <button
+            className={`tab ${isYTD ? "active" : ""}`}
+            onClick={() => setIncomeMode("ytd")}
+          >
+            Year to Date
+          </button>
+          <button
+            className={`tab ${!isYTD ? "active" : ""}`}
+            onClick={() => setIncomeMode("total")}
+          >
+            Full Year Total
+          </button>
+        </div>
+
         <details className="instructions">
           <summary>Where to find these values</summary>
           <ol>
@@ -160,47 +188,66 @@ function App() {
             </li>
             <li>
               Enter the <strong>Income</strong> column total below as
-              "Employment Income So Far" and the <strong>Tax</strong> column
-              total as "Tax Withheld So Far".
+              "{isYTD ? "Employment Income So Far" : "Total Employment Income"}"
+              and the <strong>Tax</strong> column total as
+              "{isYTD ? "Tax Withheld So Far" : "Total Tax Withheld"}".
             </li>
           </ol>
         </details>
         <p className="note">
-          Enter your employment income and PAYG tax withheld so far this
-          financial year (<strong>excluding</strong> RSU/share income — those
-          are loaded separately below). The app projects your totals to 30 June
-          assuming you continue earning at the same rate.
+          {isYTD ? (
+            <>
+              Enter your employment income and PAYG tax withheld{" "}
+              <strong>so far</strong> this financial year (
+              <strong>excluding</strong> RSU/share income). The app projects your
+              totals to 30 June assuming you continue earning at the same rate.
+            </>
+          ) : (
+            <>
+              Enter your <strong>total</strong> employment income and PAYG tax
+              withheld for the full financial year (
+              <strong>excluding</strong> RSU/share income). No projection is
+              applied.
+            </>
+          )}
         </p>
         <div className="input-grid">
           <label>
-            <span>Employment Income So Far (AUD)</span>
+            <span>
+              {isYTD
+                ? "Employment Income So Far (AUD)"
+                : "Total Employment Income (AUD)"}
+            </span>
             <div className="input-wrap">
               <span className="prefix">$</span>
               <input
                 type="number"
                 value={incomeSoFar}
                 onChange={(e) => setIncomeSoFar(e.target.value)}
-                placeholder="150,000"
+                placeholder={isYTD ? "110,000" : "150,000"}
                 min="0"
               />
             </div>
           </label>
           <label>
-            <span>Tax Withheld So Far (PAYG)</span>
+            <span>
+              {isYTD ? "Tax Withheld So Far (PAYG)" : "Total Tax Withheld (PAYG)"}
+            </span>
             <div className="input-wrap">
               <span className="prefix">$</span>
               <input
                 type="number"
                 value={taxWithheldSoFar}
                 onChange={(e) => setTaxWithheldSoFar(e.target.value)}
-                placeholder="35,000"
+                placeholder={isYTD ? "33,000" : "45,000"}
                 min="0"
               />
             </div>
             {incomeNum > 0 && (
               <span className="field-hint">
                 Expected ≈ {formatAUD(expectedWithheld)} based on{" "}
-                {formatAUD(incomeNum)} income over {elapsed} days
+                {formatAUD(incomeNum)} income
+                {isYTD ? ` over ${elapsed} days` : " for the full year"}
               </span>
             )}
           </label>
@@ -219,13 +266,15 @@ function App() {
             <span className="field-hint">PAYG withheld by employer</span>
           </label>
         </div>
-        <div className="projection-info">
-          <span>
-            📅 Day <strong>{elapsed}</strong> of {TOTAL_FY_DAYS} in FY2026 (
-            {remaining} days remaining) · Projection factor:{" "}
-            <strong>×{projectionFactor.toFixed(3)}</strong>
-          </span>
-        </div>
+        {isYTD && (
+          <div className="projection-info">
+            <span>
+              📅 Day <strong>{elapsed}</strong> of {TOTAL_FY_DAYS} in FY2026 (
+              {remaining} days remaining) · Projection factor:{" "}
+              <strong>×{projectionFactor.toFixed(3)}</strong>
+            </span>
+          </div>
+        )}
       </section>
 
       {/* ── RSU upload + table ── */}
@@ -339,19 +388,28 @@ function App() {
 
       {/* ── Income summary ── */}
       <section className="card">
-        <h2>Projected Income Summary</h2>
+        <h2>{isYTD ? "Projected Income Summary" : "Income Summary"}</h2>
         <div className="summary-table">
-          <div className="row">
-            <span>Employment income so far</span>
-            <span>{formatAUD(incomeNum)}</span>
-          </div>
-          <div className="row">
-            <span>
-              Projected remaining income{" "}
-              <span className="muted">({remaining} days)</span>
-            </span>
-            <span>{formatAUD(projectedRemainingIncome)}</span>
-          </div>
+          {isYTD ? (
+            <>
+              <div className="row">
+                <span>Employment income so far</span>
+                <span>{formatAUD(incomeNum)}</span>
+              </div>
+              <div className="row">
+                <span>
+                  Projected remaining income{" "}
+                  <span className="muted">({remaining} days)</span>
+                </span>
+                <span>{formatAUD(projectedRemainingIncome)}</span>
+              </div>
+            </>
+          ) : (
+            <div className="row">
+              <span>Employment income</span>
+              <span>{formatAUD(incomeNum)}</span>
+            </div>
+          )}
           {bonusNum > 0 && (
             <div className="row">
               <span>
@@ -366,7 +424,11 @@ function App() {
             <span>{formatAUD(totalRsuAUD)}</span>
           </div>
           <div className="row total">
-            <span>Total Projected Taxable Income</span>
+            <span>
+              {isYTD
+                ? "Total Projected Taxable Income"
+                : "Total Taxable Income"}
+            </span>
             <span>{formatAUD(totalTaxableIncome)}</span>
           </div>
         </div>
@@ -424,12 +486,15 @@ function App() {
               {withheldNum > 0 && (
                 <div className="row">
                   <span>
-                    Projected salary PAYG{" "}
-                    <span className="muted">
-                      ({formatAUD(withheldNum)} × {projectionFactor.toFixed(3)})
-                    </span>
+                    {isYTD ? "Projected salary PAYG" : "Salary PAYG withheld"}{" "}
+                    {isYTD && (
+                      <span className="muted">
+                        ({formatAUD(withheldNum)} ×{" "}
+                        {projectionFactor.toFixed(3)})
+                      </span>
+                    )}
                   </span>
-                  <span>− {formatAUD(projectedTaxWithheld)}</span>
+                  <span>− {formatAUD(annualTaxWithheld)}</span>
                 </div>
               )}
               {bonusNum > 0 && (
